@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: generate-directory-structure
+        name: Generate Directory Structure
+        entry: python generate_directory_structure.py
+        language: python
+        # 不需要把 changed 文件传给脚本
+        pass_filenames: false
+        # 即使没有匹配到文件，也会运行
+        always_run: true
+         # 让 pre-commit 在钩子修改文件后自动继续
+        stages: [commit]

@@ -1,0 +1,12 @@
+data:
+  raw_data_path: "../data/raw data/"
+  processed_data_path: "../data/cleaned data/"
+model:
+  saving_path: "../models/model saving/"
+training:
+  epochs: 10
+  batch_size: 32
+  optimizer: adam
+  loss: categorical_crossentropy
+  metrics:
+    - accuracy

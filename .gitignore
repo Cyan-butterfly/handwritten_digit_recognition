@@ -1,0 +1,30 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment
+.env
+venv/
+ENV/
+env/
+
+# Logs
+logs/
+*.log
+
+# Data
+data/raw data/
+data/cleaned data/
+data/*.csv
+
+# Models
+models/
+
+# Misc
+.DS_Store
+*.swp

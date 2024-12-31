@@ -1,0 +1,6 @@
+# 项目依赖
+
+torch
+numpy
+pandas
+scikit-learn

@@ -1,0 +1,86 @@
+# 项目目录结构
+
+- 📁 **CI_CD**/
+  - 📁 **.github**/
+    - 📁 **workflows**/
+      - ⚙️ **python-app.yml**
+- 📁 **code**/
+  - 📁 **configs**/
+    - ⚙️ **config.yaml**
+  - 📁 **main code**/
+    - 🐍 **main.py**
+  - 📁 **module code**/
+    - 🐍 **__init__.py**
+    - 🐍 **data_loader.py**
+  - 📁 **utility scripts**/
+    - 🐍 **__init__.py**
+    - 🐍 **utils.py**
+- 📁 **configs**/
+  - ⚙️ **config.yaml**
+- 📁 **data**/
+  - 📁 **cleaned data**/
+  - 📁 **data documentation**/
+    - 📝 **data documentation template.md**
+  - 📁 **data visualization**/
+    - 🖼️ **example chart.png**
+  - 📁 **raw data**/
+- 📁 **docker**/
+  - 🐳 **docker-compose.yml**
+  - 🐳 **Dockerfile**
+- 📁 **documentation**/
+  - 📁 **meeting notes**/
+    - 📝 **meeting notes template.md**
+  - 📁 **project plan**/
+    - 📝 **project plan template.md**
+  - 📁 **user manual**/
+    - 📝 **user manual template.md**
+- 📁 **environment**/
+  - 📁 **environment configuration instructions**/
+    - 📝 **configuration instructions.md**
+  - 📝 **requirements.txt**
+- 📁 **evaluation report**/
+  - 📁 **comprehensive analysis report**/
+    - 📝 **comprehensive analysis report template.md**
+  - 📁 **metrics report**/
+    - 📝 **metrics report template.md**
+  - 📁 **visualization charts**/
+    - 🖼️ **example chart.png**
+- 📁 **experiment records**/
+  - 📁 **experiment 1**/
+    - 📝 **experiment 1 record.md**
+  - 📁 **experiment 2**/
+    - 📝 **experiment 2 record.md**
+  - 📁 **experiment summary**/
+    - 📝 **experiment summary template.md**
+- 📁 **feature engineering**/
+  - 📁 **feature construction**/
+  - 📁 **feature description document**/
+    - 📝 **feature description template.md**
+  - 📁 **feature selection**/
+- 📁 **logs**/
+- 📁 **model**/
+  - 📁 **model evaluation**/
+    - 🐍 **evaluate_model.py**
+  - 📁 **model saving**/
+  - 📁 **pretrained models**/
+  - 📁 **training script**/
+    - 🐍 **train_model.py**
+  - 📁 **tuning results**/
+- 📁 **models**/
+- 📁 **notebooks**/
+  - 📓 **exploratory_analysis.ipynb**
+- 📁 **scripts**/
+  - 🐍 **data_augmentation.py**
+  - 🐍 **data_preprocessing.py**
+- 📁 **sharing materials**/
+  - 📁 **demo video**/
+    - 🎥 **example video.mp4**
+  - 📁 **PPT**/
+    - 📽 **example PPT.pptx**
+- 📁 **tests**/
+  - 🐍 **test_data_loader.py**
+- ❓ **.gitignore**
+- ⚙️ **.pre-commit-config.yaml**
+- 📝 **DIRECTORY_STRUCTURE.md**
+- 🐍 **main.py**
+- 📝 **README.md**
