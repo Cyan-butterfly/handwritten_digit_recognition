@@ -1,11 +1,16 @@
 data:
   raw_data_path: "../data/raw data/"
   processed_data_path: "../data/cleaned data/"
+
 model:
+  hidden_size: 50  # 隐藏层神经元数量
+  weight_init_std: 0.01  # 权重初始化标准差
   saving_path: "../models/model saving/"
+
 training:
-  epochs: 10
-  batch_size: 32
+  epochs: 10  # 训练轮数
+  batch_size: 32  # 批次大小
+  learning_rate: 0.1  # 学习率
   optimizer: adam
   loss: categorical_crossentropy
   metrics:
