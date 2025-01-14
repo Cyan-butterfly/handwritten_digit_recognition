@@ -1,3 +1,6 @@
+'''
+这是一个示例程序，展示了神经网络的前向传播和反向传播过程。
+'''
 import numpy as np
 
 def sigmoid(x):
@@ -77,24 +80,24 @@ print(f"dW2 shape: {dW2.shape}")   # 应该是 (2, 2)
 db2 = da2                          # 第二层偏置梯度
 print(f"db2 = da2 = {db2}")
 
+
 # 7. 隐藏层的反向传播
 print("\n隐藏层梯度：")
-dz1 = np.dot(da2, W2.T)           # 传递到隐藏层的误差
-print(f"dz1 = np.dot(da2, W2.T) = {dz1}")
+da1 = np.dot(da2, W2.T)           # 传递到隐藏层的误差
+print(f"da1 = np.dot(da2, W2.T) = {da1}")
 
-da1 = sigmoid_grad(z1) * dz1       # 考虑激活函数的梯度
-print(f"da1 = sigmoid_grad(z1) * dz1 = {da1}")
+dz1 = sigmoid_grad(z1) * da1      # 考虑激活函数的梯度
+print(f"dz1 = sigmoid_grad(z1) * da1 = {dz1}")
 
 # 重塑维度以进行矩阵乘法
 x_reshaped = x.reshape(-1, 1)      # 变成 (2, 1)
-da1_reshaped = da1.reshape(1, -1)  # 变成 (1, 2)
+dz1_reshaped = dz1.reshape(1, -1)  # 变成 (1, 2)
 
-dW1 = np.dot(x_reshaped, da1_reshaped)  # 第一层权重梯度
-print(f"dW1 = np.dot(x.reshape(-1,1), da1.reshape(1,-1)) =\n{dW1}")
+dW1 = np.dot(x_reshaped, dz1_reshaped)  # 第一层权重梯度
+print(f"dW1 = np.dot(x.reshape(-1,1), dz1.reshape(1,-1)) =\n{dW1}")
 print(f"dW1 shape: {dW1.shape}")   # 应该是 (2, 2)
-
-db1 = da1                          # 第一层偏置梯度 对多个样本的情况，有求和与求平均两种情况。一般是求平均，使偏置与样本数量无关
-print(f"db1 = da1 = {db1}")
+db1 = dz1                          # 第一层偏置梯度
+print(f"db1 = dz1 = {db1}")
 
 # 8. 参数更新示例
 learning_rate = 0.1
