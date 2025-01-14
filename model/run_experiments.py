@@ -24,24 +24,25 @@ def load_mnist():
     """
     try:
         # 尝试从本地加载数据
-        data_dir = "data/mnist"
+        data_dir = "data/cleaned data"  # 修改为正确的数据目录
         
         print("Loading MNIST dataset...")
         
         # 加载训练数据
-        train_images = np.load(os.path.join(data_dir, 'train_images.npy'))
-        train_labels = np.load(os.path.join(data_dir, 'train_labels.npy'))
+        train_images = np.load(os.path.join(data_dir, 'x_train.npy'))
+        train_labels = np.load(os.path.join(data_dir, 'y_train.npy')).astype(np.int64)  # 确保标签是整数类型
         
         # 加载测试数据
-        test_images = np.load(os.path.join(data_dir, 'test_images.npy'))
-        test_labels = np.load(os.path.join(data_dir, 'test_labels.npy'))
+        test_images = np.load(os.path.join(data_dir, 'x_test.npy'))
+        test_labels = np.load(os.path.join(data_dir, 'y_test.npy')).astype(np.int64)  # 确保标签是整数类型
         
         # 数据预处理
-        # 1. 将像素值归一化到 0-1 之间
-        train_images = train_images.astype('float32') / 255
-        test_images = test_images.astype('float32') / 255
+        # 注意：数据在预处理阶段已经归一化，这里不需要再次归一化
+        # 只需要确保数据类型正确
+        train_images = train_images.astype('float32')
+        test_images = test_images.astype('float32')
         
-        # 2. 将图像展平为一维数组
+        # 将图像展平为一维数组
         train_images = train_images.reshape(train_images.shape[0], -1)
         test_images = test_images.reshape(test_images.shape[0], -1)
         
@@ -62,13 +63,8 @@ def load_mnist():
         test_labels = np.random.randint(0, 10, 10000)
         
         return train_images, train_labels, test_images, test_labels
-def run_experiment(hidden_size, learning_rate, X_train, y_train, X_test, y_test, run_num, logger=None):
+def run_experiment(hidden_size, learning_rate, X_train, y_train, X_test, y_test, run_num, exp_dir):
     """运行单次实验"""
-    # 创建实验目录
-    exp_name = f"exp_h{hidden_size}_lr{learning_rate}_run{run_num}"
-    exp_dir = os.path.join("experiments", exp_name)
-    os.makedirs(exp_dir, exist_ok=True)
-    
     # 初始化日志记录器
     logger = ExperimentLogger(exp_dir)
     logger.log_experiment_start({
@@ -146,25 +142,32 @@ class ExperimentLogger:
         os.makedirs(exp_dir, exist_ok=True)
         
         # 配置日志记录器
-        self.logger = logging.getLogger(f"experiment_{exp_dir}")
+        self.logger = logging.getLogger(f"experiment_{os.path.basename(exp_dir)}")
         self.logger.setLevel(logging.INFO)
         
+        # 确保logger没有已存在的处理器
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
+        
         # 添加文件处理器
-        file_handler = logging.FileHandler(self.log_path)
+        file_handler = logging.FileHandler(self.log_path, mode='w', encoding='utf-8')
         file_handler.setLevel(logging.INFO)
         
         # 添加控制台处理器
-        console_handler = logging.StreamHandler()
+        console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
         
         # 设置格式
-        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
         
         # 添加处理器
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
+        
+        # 禁用日志传播
+        self.logger.propagate = False
     
     def log_experiment_start(self, config):
         """记录实验开始信息"""
@@ -178,7 +181,7 @@ class ExperimentLogger:
             f"Epoch {epoch}: loss={metrics['loss']:.4f}, "
             f"accuracy={metrics['accuracy']:.4f}"
         )
-    
+        
     def log_experiment_end(self, final_metrics):
         """记录实验结束信息"""
         self.logger.info("实验结束")
@@ -290,17 +293,45 @@ def load_model(model_dir):
 
 
 
+'''
+实验流程：
+
+数据准备阶段：
+    加载MNIST数据集
+    数据预处理（归一化、展平）
+实验设计阶段：
+    设置不同的隐藏层大小 [25, 50, 100]
+    设置不同的学习率 [0.01, 0.1, 0.5]
+    每个配置重复3次实验
+实验执行阶段：
+    对每个参数配置：
+    初始化神经网络
+    训练模型（10个epoch）
+    记录训练过程
+    保存模型和训练曲线
+数据分析阶段：
+    计算统计指标（准确率、损失值的均值和方差）
+    生成性能对比图表
+    分析不同参数配置的效果
+报告生成阶段：
+    生成详细的实验报告
+    包含实验配置、结果分析、可视化图表
+    总结最佳配置和主要发现
+'''
 def main():
-    
+    # 1.数据准备阶段
     # 记录开始时间
     start_time = datetime.now()
+    timestamp = start_time.strftime("%Y%m%d_%H%M%S")
     
-    # 创建实验主目录
-    os.makedirs("experiments", exist_ok=True)
+    # 创建实验主目录（添加时间戳）
+    exp_root_dir = os.path.join("experiments", f"exp_batch_{timestamp}")
+    os.makedirs(exp_root_dir, exist_ok=True)
     
     # 加载数据
     X_train, y_train, X_test, y_test = load_mnist()
     
+    # 2.实验设计阶段：
     # 实验配置
     hidden_sizes = [25, 50, 100]
     learning_rates = [0.01, 0.1, 0.5]
@@ -315,21 +346,23 @@ def main():
     results = {}
     detailed_stats = {}
     
+    # 3.实验执行阶段：
     # 运行实验
     for hidden_size in hidden_sizes:
         for lr in learning_rates:
             config_results = []
             for run in range(runs_per_config):
+                current_experiment += 1  # 移到循环开始处
                 print(f"\nExperiment {current_experiment}/{total_experiments}")
                 print(f"Configuration: hidden_size={hidden_size}, lr={lr}, run={run+1}")
                 
-                # 创建logger实例
-                exp_dir = os.path.join("experiments", f"exp_h{hidden_size}_lr{lr}_run{run+1}")
-                logger = ExperimentLogger(exp_dir)
+                # 创建实验目录
+                exp_dir = os.path.join(exp_root_dir, f"exp_h{hidden_size}_lr{lr}_run{run+1}")
+                os.makedirs(exp_dir, exist_ok=True)
                 
                 # 运行实验，传入logger
                 history = run_experiment(
-                    hidden_size, lr, X_train, y_train, X_test, y_test, run+1, logger
+                    hidden_size, lr, X_train, y_train, X_test, y_test, run+1, exp_dir
                 )
                 config_results.append(history)
                 
@@ -338,16 +371,20 @@ def main():
             detailed_stats[config_key] = analyzer.calculate_statistics(config_results)
             results[config_key] = detailed_stats[config_key]
     
+    # 4.数据分析阶段：
     # 保存详细统计结果
-    with open("experiments/detailed_stats.json", "w") as f:
+    with open(os.path.join(exp_root_dir, "detailed_stats.json"), "w") as f:
         json.dump(detailed_stats, f, indent=4)
     
     # 创建比较图
-    create_comparison_plots(results, hidden_sizes, learning_rates)
+    create_comparison_plots(results, hidden_sizes, learning_rates, exp_root_dir)
     
-    print("\nExperiments completed. Results saved in experiments/detailed_stats.json")
+    print("\nAll experiments completed successfully!")
+    print(f"Results saved in: {exp_root_dir}")
+
+    # 5.报告生成阶段：
     # 生成实验报告
-    generate_experiment_report(results, hidden_sizes, learning_rates, start_time)
+    generate_experiment_report(results, hidden_sizes, learning_rates, start_time, exp_root_dir)
 
     # 保存实验配置
     experiment_config = {
@@ -357,20 +394,10 @@ def main():
         "epochs": 10,
         "batch_size": 32
     }
-    with open("experiments/experiment_config.json", "w") as f:
+    with open(os.path.join(exp_root_dir, "experiment_config.json"), "w") as f:
         json.dump(experiment_config, f, indent=4)
 
-    total_experiments = len(hidden_sizes) * len(learning_rates) * runs_per_config
-    current_experiment = 0
-    
-    for hidden_size in hidden_sizes:
-        for lr in learning_rates:
-            for run in range(runs_per_config):
-                current_experiment += 1
-                print(f"\nExperiment {current_experiment}/{total_experiments}")
-                print(f"Configuration: hidden_size={hidden_size}, lr={lr}, run={run+1}")
-
-def create_comparison_plots(results, hidden_sizes, learning_rates):
+def create_comparison_plots(results, hidden_sizes, learning_rates, exp_root_dir):
     """
     创建实验结果的对比可视化
     """
@@ -383,10 +410,10 @@ def create_comparison_plots(results, hidden_sizes, learning_rates):
     # 1. 不同隐藏层大小的性能对比
     ax1 = plt.subplot(2, 2, 1)
     for hidden_size in hidden_sizes:
-        accuracies = [results[f"h{hidden_size}_lr{lr}"]["avg_accuracy"] for lr in learning_rates]
+        accuracies = [results[f"h{hidden_size}_lr{lr}"]["mean_accuracy"] for lr in learning_rates]
         ax1.plot(learning_rates, accuracies, 'o-', label=f'Hidden Size={hidden_size}')
     ax1.set_xlabel('Learning Rate')
-    ax1.set_ylabel('Average Accuracy')
+    ax1.set_ylabel('Mean Accuracy')
     ax1.set_title('Accuracy vs Learning Rate')
     ax1.legend()
     ax1.grid(True)
@@ -394,10 +421,10 @@ def create_comparison_plots(results, hidden_sizes, learning_rates):
     # 2. 不同学习率的性能对比
     ax2 = plt.subplot(2, 2, 2)
     for lr in learning_rates:
-        accuracies = [results[f"h{h}_lr{lr}"]["avg_accuracy"] for h in hidden_sizes]
+        accuracies = [results[f"h{h}_lr{lr}"]["mean_accuracy"] for h in hidden_sizes]
         ax2.plot(hidden_sizes, accuracies, 'o-', label=f'Learning Rate={lr}')
     ax2.set_xlabel('Hidden Layer Size')
-    ax2.set_ylabel('Average Accuracy')
+    ax2.set_ylabel('Mean Accuracy')
     ax2.set_title('Accuracy vs Hidden Layer Size')
     ax2.legend()
     ax2.grid(True)
@@ -407,7 +434,7 @@ def create_comparison_plots(results, hidden_sizes, learning_rates):
     accuracy_matrix = np.zeros((len(hidden_sizes), len(learning_rates)))
     for i, h in enumerate(hidden_sizes):
         for j, lr in enumerate(learning_rates):
-            accuracy_matrix[i, j] = results[f"h{h}_lr{lr}"]["avg_accuracy"]
+            accuracy_matrix[i, j] = results[f"h{h}_lr{lr}"]["mean_accuracy"]
     im = ax3.imshow(accuracy_matrix, cmap='YlOrRd')
     plt.colorbar(im)
     ax3.set_xticks(range(len(learning_rates)))
@@ -421,29 +448,29 @@ def create_comparison_plots(results, hidden_sizes, learning_rates):
     # 4. 损失值对比
     ax4 = plt.subplot(2, 2, 4)
     for hidden_size in hidden_sizes:
-        losses = [results[f"h{hidden_size}_lr{lr}"]["avg_loss"] for lr in learning_rates]
+        losses = [results[f"h{hidden_size}_lr{lr}"]["mean_loss"] for lr in learning_rates]
         ax4.plot(learning_rates, losses, 'o-', label=f'Hidden Size={hidden_size}')
     ax4.set_xlabel('Learning Rate')
-    ax4.set_ylabel('Average Loss')
+    ax4.set_ylabel('Mean Loss')
     ax4.set_title('Loss vs Learning Rate')
     ax4.legend()
     ax4.grid(True)
     
     plt.tight_layout()
-    plt.savefig('experiments/comparison_plots.png', dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(exp_root_dir, "comparison_plots.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
-def generate_experiment_report(results, hidden_sizes, learning_rates, start_time):
+def generate_experiment_report(results, hidden_sizes, learning_rates, start_time, exp_root_dir):
     """
     生成实验报告
     """
     # 找出最佳配置
-    best_config = max(results.items(), key=lambda x: x[1]['avg_accuracy'])
+    best_config = max(results.items(), key=lambda x: x[1]['mean_accuracy'])
     best_config_name = best_config[0]
     best_config_metrics = best_config[1]
     
     # 创建报告目录
-    report_dir = "experiment_reports"
+    report_dir = os.path.join(exp_root_dir, "reports")
     os.makedirs(report_dir, exist_ok=True)
     
     # 生成报告文件名
@@ -473,8 +500,8 @@ def generate_experiment_report(results, hidden_sizes, learning_rates, start_time
         learning_rate = float(best_config_name.split('_')[1][2:])
         f.write(f"- 最佳隐藏层大小：{hidden_size}\n")
         f.write(f"- 最佳学习率：{learning_rate}\n")
-        f.write(f"- 最高准确率：{best_config_metrics['avg_accuracy']:.4f}\n")
-        f.write(f"- 最低损失值：{best_config_metrics['avg_loss']:.4f}\n\n")
+        f.write(f"- 最高准确率：{best_config_metrics['mean_accuracy']:.4f}\n")
+        f.write(f"- 最低损失值：{best_config_metrics['mean_loss']:.4f}\n\n")
         
         # 详细实验数据
         f.write("## 详细实验数据\n\n")
@@ -486,18 +513,18 @@ def generate_experiment_report(results, hidden_sizes, learning_rates, start_time
             for lr in learning_rates:
                 config_key = f"h{h}_lr{lr}"
                 metrics = results[config_key]
-                f.write(f"| {h} | {lr} | {metrics['avg_accuracy']:.4f} | {metrics['avg_loss']:.4f} |\n")
+                f.write(f"| {h} | {lr} | {metrics['mean_accuracy']:.4f} | {metrics['mean_loss']:.4f} |\n")
         
         # 可视化结果
         f.write("\n## 可视化结果\n")
         f.write("### 性能对比图\n")
-        f.write("![实验结果对比图](../experiments/comparison_plots.png)\n\n")
+        f.write(f"![实验结果对比图](../comparison_plots.png)\n\n")
         
         # 结论与建议
         f.write("## 结论与建议\n\n")
         f.write("### 主要发现\n")
         f.write(f"1. 最佳性能配置为隐藏层大小 {hidden_size}，学习率 {learning_rate}\n")
-        f.write(f"2. 平均准确率达到 {best_config_metrics['avg_accuracy']:.4f}\n")
+        f.write(f"2. 平均准确率达到 {best_config_metrics['mean_accuracy']:.4f}\n")
         
         # 附录
         f.write("\n## 附录\n\n")
@@ -505,7 +532,8 @@ def generate_experiment_report(results, hidden_sizes, learning_rates, start_time
         f.write(f"- Python版本：{sys.version.split()[0]}\n")
         f.write("- 主要依赖包版本：\n")
         f.write(f"  - NumPy: {np.__version__}\n")
-        f.write(f"  - Matplotlib: {plt.__version__}\n")
+        import matplotlib
+        f.write(f"- Matplotlib: {matplotlib.__version__}\n")
         
         print(f"\nExperiment report generated: {report_path}")
 

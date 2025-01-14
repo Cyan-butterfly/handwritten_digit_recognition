@@ -1,0 +1,6 @@
+{
+  "input_size": 784,
+  "hidden_size": 50,
+  "output_size": 10,
+  "learning_rate": 0.01
+}

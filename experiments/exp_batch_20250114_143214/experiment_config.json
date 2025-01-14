@@ -1,0 +1,15 @@
+{
+    "hidden_sizes": [
+        25,
+        50,
+        100
+    ],
+    "learning_rates": [
+        0.01,
+        0.1,
+        0.5
+    ],
+    "runs_per_config": 3,
+    "epochs": 10,
+    "batch_size": 32
+}

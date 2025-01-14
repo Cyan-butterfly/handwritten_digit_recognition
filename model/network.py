@@ -124,71 +124,99 @@ class Network:
             batch_size: 批次大小
             logger: 日志记录器
         """
-        history = {'loss': [], 'accuracy': []}
         n_samples = X.shape[0]
+        n_batches = (n_samples + batch_size - 1) // batch_size
+        history = {'loss': [], 'accuracy': []}
         
         for epoch in range(epochs):
-            # 打乱数据
+            total_loss = 0
+            total_batches = 0
+            
+            if logger:
+                logger.logger.info(f"\nEpoch {epoch+1}/{epochs}")
+                logger.logger.info("-" * 20)
+            
+            # 随机打乱数据
             indices = np.random.permutation(n_samples)
             X = X[indices]
             y = y[indices]
             
-            epoch_loss = 0
-            correct_predictions = 0
-            
-            # 批次训练
             for i in range(0, n_samples, batch_size):
                 batch_X = X[i:i + batch_size]
                 batch_y = y[i:i + batch_size]
                 
                 # 前向传播
                 output = self.forward(batch_X)
-                loss = self.compute_loss(output, batch_y)
-                epoch_loss += loss
                 
-                # 计算准确率
-                predictions = np.argmax(output, axis=1)
-                correct_predictions += np.sum(predictions == batch_y)
+                # 计算损失
+                loss = self.compute_loss(output, batch_y)
+                total_loss += loss
+                total_batches += 1
                 
                 # 反向传播
                 self.backward(batch_X, batch_y, output)
+                
+                # 每处理25%的数据输出一次进度
+                if logger and (i + batch_size) % (n_samples // 4) < batch_size:
+                    progress = (i + batch_size) / n_samples * 100
+                    avg_loss = total_loss / total_batches
+                    logger.logger.info(f"Progress: {progress:.1f}% - Avg Loss: {avg_loss:.4f}")
             
-            # 计算epoch平均损失和准确率
-            epoch_loss /= (n_samples // batch_size)
-            epoch_accuracy = correct_predictions / n_samples
+            # 计算epoch的平均损失和准确率
+            avg_epoch_loss = total_loss / total_batches
+            predictions = np.argmax(self.forward(X), axis=1)
+            accuracy = np.mean(predictions == np.argmax(y, axis=1))
             
-            # 记录历史
-            history['loss'].append(epoch_loss)
-            history['accuracy'].append(epoch_accuracy)
+            history['loss'].append(avg_epoch_loss)
+            history['accuracy'].append(accuracy)
             
-            # 使用logger记录每个epoch的信息
+            # 每个epoch结束时输出平均损失和准确率
             if logger:
-                logger.log_epoch(epoch, {
-                    'loss': epoch_loss,
-                    'accuracy': epoch_accuracy
-                })
+                logger.logger.info(
+                    f"Epoch {epoch+1} Summary - "
+                    f"Loss: {avg_epoch_loss:.4f}, "
+                    f"Accuracy: {accuracy:.4f}"
+                )
         
         return history
 
     def backward(self, X, y, output):
+        """
+        反向传播计算梯度
+        y: 真实标签 (m, 10)，one-hot编码格式
+        """
+        m = y.shape[0]
+        
         # 计算输出层梯度
-        output_error = output.copy()
-        output_error[range(len(y)), y] -= 1
+        doutput = (output - y) / m
         
         # 计算隐藏层的输出
         hidden = np.dot(X, self.W1) + self.b1
         hidden = self.sigmoid(hidden)
         
         # 更新输出层权重
-        self.W2 -= self.learning_rate * np.dot(hidden.T, output_error) / len(y)
-        self.b2 -= self.learning_rate * np.mean(output_error, axis=0)
+        self.W2 -= self.learning_rate * np.dot(hidden.T, doutput)
+        self.b2 -= self.learning_rate * np.sum(doutput, axis=0)
         
         # 计算隐藏层梯度
-        hidden_grad = np.dot(output_error, self.W2.T) * (hidden * (1 - hidden))  # sigmoid导数
+        hidden_grad = np.dot(doutput, self.W2.T) * (hidden * (1 - hidden))
         
         # 更新隐藏层权重
-        self.W1 -= self.learning_rate * np.dot(X.T, hidden_grad) / len(y)
-        self.b1 -= self.learning_rate * np.mean(hidden_grad, axis=0)
+        self.W1 -= self.learning_rate * np.dot(X.T, hidden_grad)
+        self.b1 -= self.learning_rate * np.sum(hidden_grad, axis=0)
+
+    def compute_loss(self, output, y):
+        """
+        计算交叉熵损失
+        output: 网络输出 (m, 10)
+        y: 真实标签 (m, 10)，one-hot编码格式
+        """
+        # 数值稳定性处理
+        epsilon = 1e-15
+        output = np.clip(output, epsilon, 1 - epsilon)
+        # 直接用one-hot标签计算交叉熵
+        return -np.mean(np.sum(y * np.log(output), axis=1))
+
     def forward(self, X):
         # 输入层到隐藏层
         hidden = np.dot(X, self.W1) + self.b1
@@ -206,12 +234,6 @@ class Network:
         exp_x = np.exp(x)
         return exp_x / np.sum(exp_x, axis=1, keepdims=True)
     
-    def compute_loss(self, output, y):
-        # 交叉熵损失
-        m = y.shape[0]
-        log_likelihood = -np.log(output[range(m), y])
-        loss = np.sum(log_likelihood) / m
-        return loss
     def sigmoid(self, x):
         """Sigmoid激活函数"""
         return 1 / (1 + np.exp(-x))
